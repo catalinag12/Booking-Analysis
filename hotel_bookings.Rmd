@@ -1,0 +1,68 @@
+---
+title: "Hotel Booking Analysis"
+author: "Maftei Alexandru, Vasile Catalina"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+### Introduction
+The dataset contains information on bookings in two types of hotels, both located in Portugal,a resort hotel and a city hotel. Each observation represents a hotel reservation. The data set includes reservations between July 1, 2015 and August 31, 2017, including those canceled. Because it is the actual data of the hotel, all information regarding the identification of the hotel or the client has been deleted. Due to the lack of real business data for scientific and educational purposes, these data sets can play an important role for research and education in revenue management, machine learning or data mining, as well as in other fields.
+
+Every year, more than 140 million bookings were made on the Internet and hotel booking cancellations is a growing problem. An analysis of the last 5 years showed that the cancellation rate on booking has reached almost 40% and this trend produces a very negative impact on hotels revenue and distribution management strategies.
+
+So, it is useful to try to understand and even predict which guests are more likely to cancel their bookings by getting insights from the data set and discovering which features have contributed more to cancellations.
+
+
+
+### The dataset
++ hotel : resort or city
++ is_canceled: canceled=1, not canceled=0
++ arrival_date_year
++ arrival_date_month
++ arrival_date_month : between 1 and 53
++ arrival_date_day_of_month
++ stays_in_weekend_nights
++ stays_in_week_nights
++ adults
++ children
++ babies
++ meal: undefined(no package), BB, HB, FB
++ country
++ market_segment : TA=travel agents, TO=tour operators
++ distribution_channel : TA or TO
++ is_repeated_guest: yes=1, no=0
++ previous_cancellations
++ previous_bookings_not_canceled
++ reserved_room_type
++ assigned_room_type
++ booking_changes
++ deposit_type: no deposit, non refund or refundable
++ agent
++ company
++ day_in_waiting_list
++ customer_type
++ adr (average daily rate) =sum of all transactions/no of nights
++ required_car_parking_spaces
++ total_of_special_requests
++ reservation_status: canceled, check-out, no-show
++ reservation_status_date
+
+
+### Exploratory Data Analysis
+* perform initial investigations on data in order to discover patterns, anomalies with the help of summary statistics and graphical representations
+
+We will try to answer to questions such as:
+
++ Which month is the most occupied?
++ Which month has the greates number of canceled bookings?
++ Which hotel has a greater number of cancelations?
++ Has the deposit type any effect on the cancelations?
++ From which country most tourists come?
++ Which is the most booked accommodation type?
++ How does the ADR vary over year?
+
+We will also try to find different relationships between the attributes.
+
