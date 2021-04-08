@@ -88,5 +88,118 @@ We will try to answer to questions such as:
 
 We will also try to find different relationships between the attributes.
 
-### 
+### Graphics
+
+```{r}
+countries<-as.data.frame(table(mydataset$country))
+data <- data.frame(
+  group=countries["Var1"],
+  value=countries["Freq"]
+)
+
+install.packages("ggplot2",repos = "http://cran.us.r-project.org")
+library(ggplot2)
+
+ggplot(data, aes(x="", y=Freq, fill=Var1)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)+ 
+  geom_text(aes(y = Freq, label = Var1), color = "white") + 
+  theme(legend.position="none")
+```
+
+People from almost the entire world choose to spend their holiday in these two hotels. The majority is of course, from Portugal, and also from european countries, such as Great Britain and France.
+
+
+
+```{r}
+ggplot(data = mydataset,aes(is_canceled))+ geom_histogram(binwidth = 0.5, col='black', fill='blue', alpha = 0.4) + facet_wrap(~hotel)
+```
+
+Most of the cancellations are made at city hotels.
+
+
+
+```{r}
+
+install.packages("dplyr",repos = "http://cran.us.r-project.org")   
+library(magrittr)
+library(dplyr)
+mydataset%>%count(hotel)%>%ggplot(aes(hotel,n)) + geom_bar(stat = 'identity', fill = 'blue', alpha = 0.4, col = "black") +
+  xlab('Hotels ') + ylab('Frequency')
+```
+
+However, clients still prefer city hotels instead of resorts.
+
+
+```{r}
+table(mydataset$hotel)
+
+
+table(mydataset$is_canceled, mydataset$hotel)
+```
+
+
+
+```{r}
+mydataset%>%group_by(arrival_date_month)%>%summarise(Count = n())%>%arrange(-Count)%>%ggplot(aes(x = arrival_date_month, y = Count)) +
+  geom_bar(stat = 'identity',fill = "dodgerblue") + coord_flip() + geom_text(aes(x =arrival_date_month, y=0.02, label= Count),
+                                                                             hjust=-1, vjust=0, size=4, 
+                                                                             colour="black", fontface="bold",
+                                                                             angle=360)
+```
+
+The most popular month is august, followed by july, and the least popular for travelling is january.
+
+```{r}
+mydataset %>% group_by(mydataset$arrival_date_month)  %>% summarise(length(is_canceled))
+```
+
+July and august are also the months with the greatest number of cancellations.
+
+```{r}
+mydataset %>% group_by(mydataset$adults)  %>% summarise(length(is_canceled))
+
+```
+
+Couples are more likey to cancel their bookings.
+
+```{r}
+ggplot(mydataset, aes(arrival_date_month, fill = factor(is_canceled))) +
+  geom_bar() + geom_text(stat = "count", aes(label = ..count..), hjust = 1) +
+  coord_flip() + scale_fill_discrete(
+    name = "Statusul",
+    breaks = c("0", "1"),
+    label = c("Canceled", "Confirmed")
+  ) +
+  labs(title = "Status of the booking depending on month",
+       x = "Month",
+       y = "Number") + theme_bw()
+```
+
+
+ 
+
+```{r}
+ggplot(mydataset, aes(customer_type, fill = hotel)) + 
+  geom_bar(stat = "count", position = position_dodge()) + 
+  labs(title = "Customer preferences",
+       x = "Customer type",
+       y = "Number") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_blank())
+```
+
+
+
+```{r}
+mydataset %>% group_by(mydataset$market_segment)  %>% summarise(length(is_canceled)) 
+```
+The online segment has the greatest number of cancellations.
+
+
+```{r}
+
+mydataset %>% group_by(mydataset$reserved_room_type)  %>% summarise(length(is_canceled)) 
+```
+Room of type A has the greatest number of cancellations.
 
