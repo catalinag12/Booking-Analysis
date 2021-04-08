@@ -50,6 +50,28 @@ So, it is useful to try to understand and even predict which guests are more lik
 + reservation_status: canceled, check-out, no-show
 + reservation_status_date
 
+### Preparation of the data set
+```{r}
+data<-read.csv('C:/Users/catal/OneDrive/Desktop/hotel_bookings.csv', header= TRUE)
+mydataset<-read.csv('C:/Users/catal/OneDrive/Desktop/hotel_bookings.csv', header= TRUE)
+#delete missing values
+sum(is.na(mydataset))
+#4 missing values in the column childer, so we'll replace them with values from column babies
+n <- length(mydataset$children)
+for (i in 1:n) {
+  if (is.na(mydataset$children[i]))
+    mydataset$children[i] <- mydataset$babies[i]
+}
+
+
+#verify again if the missing values were omitted
+sum(is.na(mydataset))
+
+rownames(mydataset)<-mydataset$name
+mydataset$name=NULL
+str(mydataset)
+```
+
 
 ### Exploratory Data Analysis
 * perform initial investigations on data in order to discover patterns, anomalies with the help of summary statistics and graphical representations
@@ -65,4 +87,6 @@ We will try to answer to questions such as:
 + How does the ADR vary over year?
 
 We will also try to find different relationships between the attributes.
+
+### 
 
