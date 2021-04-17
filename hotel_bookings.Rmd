@@ -201,6 +201,22 @@ mydataset %>% group_by(mydataset$reserved_room_type)  %>% summarise(length(is_ca
 ```
 Room of type A has the greatest number of cancellations.
 
+### EDA conclusions ###
+
+* the most popular month is July, followed by August and the least popular is January
+* guests prefer the city hotel rather than the resort hotel
+* obviously, city hotel has more cancelled bookings than the resort hotel
+* the bookings were mostly made by european tourists, especially from Portugal
+* the preffered meal is Bed&Breakfast
+* only 3% are repetead guests
+* the highest adr is in August
+* the majority of the bookings are made by online travel agents
+* bookings with a lead time more than 100 days have more chances of being cancelled
+* the bookings with less special requests are more likely to be cancelled
+* for resort, adr is more expensive during July, August and September, while for city hotel, adr is slightly higher in March, April and May.
+* the bookings with no deposit are more likely to be cancelled
+
+
 ### Logistic regression ###
 
 + technique of regression analysis
@@ -314,16 +330,16 @@ auc(ROC)
 AUC has a value close to 1, so we can say that we have a good prediction model.
 
 
-### Conclusions ###
+### Conclusions and recommendations ###
 
-+ a model for booking cancellations can help in the identification of the likelihood of a booking being cancelled
-+ gives the hotel managers the opportunity to take measures and avoid possible cancellations
-+ the most important variables that help in prediction are: lead time, adr, deposit type, arrival day of the month, total number of special requests
-+ some possible measures would be:
-- setting non-refundable rates
-- collecting deposits
-- implement more efficient cancellation policies
-- offer special discounts
-- improve customer service by looking athe the number of special requests
+* a model for booking cancellations can help in the identification of the likelihood of a booking being cancelled
+* gives the hotel managers the opportunity to take measures and avoid possible cancellations
+* the most important variables that help in prediction are: lead time, adr, deposit type, arrival day of the month, total number of special requests
+* some possible measures would be:
+  - setting non-refundable rates
+  - collecting deposits
+  - implement more efficient cancellation policies
+  - offer special discounts
+  - improve customer service by looking athe the number of special requests
 
 
