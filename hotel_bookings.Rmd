@@ -4,9 +4,6 @@ author: "Maftei Alexandru, Vasile Catalina"
 output: slidy_presentation
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
 
 ### Introduction
 The dataset contains information on bookings in two types of hotels, both located in Portugal,a resort hotel and a city hotel. Each observation represents a hotel reservation. The data set includes reservations between July 1, 2015 and August 31, 2017, including those canceled. Because it is the actual data of the hotel, all information regarding the identification of the hotel or the client has been deleted. Due to the lack of real business data for scientific and educational purposes, these data sets can play an important role for research and education in revenue management, machine learning or data mining, as well as in other fields.
@@ -51,7 +48,7 @@ So, it is useful to try to understand and even predict which guests are more lik
 + reservation_status_date
 
 ### Preparation of the data set
-```{r}
+```{r, warning=FALSE}
 data<-read.csv('C:/Users/catal/OneDrive/Desktop/hotel_bookings.csv', header= TRUE)
 mydataset<-read.csv('C:/Users/catal/OneDrive/Desktop/hotel_bookings.csv', header= TRUE)
 #delete missing values
@@ -90,7 +87,7 @@ We will also try to find different relationships between the attributes.
 
 ### Graphics
 
-```{r}
+```{r,warning=FALSE}
 countries<-as.data.frame(table(mydataset$country))
 data <- data.frame(
   group=countries["Var1"],
@@ -111,7 +108,7 @@ People from almost the entire world choose to spend their holiday in these two h
 
 
 
-```{r}
+```{r,warning=FALSE}
 ggplot(data = mydataset,aes(is_canceled))+ geom_histogram(binwidth = 0.5, col='black', fill='blue', alpha = 0.4) + facet_wrap(~hotel)
 ```
 
@@ -119,7 +116,7 @@ Most of the cancellations are made at city hotels.
 
 
 
-```{r}
+```{r,warning=FALSE}
 
 install.packages("dplyr",repos = "http://cran.us.r-project.org")   
 library(magrittr)
@@ -131,7 +128,7 @@ mydataset%>%count(hotel)%>%ggplot(aes(hotel,n)) + geom_bar(stat = 'identity', fi
 However, clients still prefer city hotels instead of resorts.
 
 
-```{r}
+```{r,warning=FALSE}
 table(mydataset$hotel)
 
 
@@ -140,7 +137,7 @@ table(mydataset$is_canceled, mydataset$hotel)
 
 
 
-```{r}
+```{r,warning=FALSE}
 mydataset%>%group_by(arrival_date_month)%>%summarise(Count = n())%>%arrange(-Count)%>%ggplot(aes(x = arrival_date_month, y = Count)) +
   geom_bar(stat = 'identity',fill = "dodgerblue") + coord_flip() + geom_text(aes(x =arrival_date_month, y=0.02, label= Count),
                                                                              hjust=-1, vjust=0, size=4, 
@@ -150,24 +147,26 @@ mydataset%>%group_by(arrival_date_month)%>%summarise(Count = n())%>%arrange(-Cou
 
 The most popular month is august, followed by july, and the least popular for travelling is january.
 
-```{r}
+```{r,warning=FALSE}
 mydataset %>% group_by(mydataset$arrival_date_month)  %>% summarise(length(is_canceled))
 ```
 
 July and august are also the months with the greatest number of cancellations.
 
-```{r}
+```{r,warning=FALSE}
 mydataset %>% group_by(mydataset$adults)  %>% summarise(length(is_canceled))
 
 ```
 
-Couples are more likey to cancel their bookings.
+Couples are more likely to cancel their bookings.
+
 
 ```{r}
-ggplot(mydataset, aes(arrival_date_month, fill = factor(is_canceled))) +
+
+ggplot(mydataset, aes((arrival_date_month), fill = factor(is_canceled))) +
   geom_bar() + geom_text(stat = "count", aes(label = ..count..), hjust = 1) +
   coord_flip() + scale_fill_discrete(
-    name = "Statusul",
+    name = "Status",
     breaks = c("0", "1"),
     label = c("Canceled", "Confirmed")
   ) +
@@ -176,10 +175,9 @@ ggplot(mydataset, aes(arrival_date_month, fill = factor(is_canceled))) +
        y = "Number") + theme_bw()
 ```
 
-
  
 
-```{r}
+```{r,warning=FALSE}
 ggplot(mydataset, aes(customer_type, fill = hotel)) + 
   geom_bar(stat = "count", position = position_dodge()) + 
   labs(title = "Customer preferences",
@@ -191,15 +189,141 @@ ggplot(mydataset, aes(customer_type, fill = hotel)) +
 
 
 
-```{r}
+```{r,warning=FALSE}
 mydataset %>% group_by(mydataset$market_segment)  %>% summarise(length(is_canceled)) 
 ```
 The online segment has the greatest number of cancellations.
 
 
-```{r}
+```{r,warning=FALSE}
 
 mydataset %>% group_by(mydataset$reserved_room_type)  %>% summarise(length(is_canceled)) 
 ```
 Room of type A has the greatest number of cancellations.
+
+### Logistic regression ###
+
++ technique of regression analysis
++ the dependent variable is binary, it has the values 0 or 1, so we have a binomial regression
++ we analyze the dependent categorical variable with the help of the independent variables
++ we keep as independent variables the most representatives ones for the model
++ the model of the logistic regression is similar tot the one of a linear regression, with the exception of the coefficients that vary
++ it measures the relationship between the dependent categorical variable and many independent variables by estimating probabilities using a logistic function
++ it models the probability that a booking might be cancelled or not
+
+We will start by computing the correlations between each pair of numerical variables. These correlations will be represented in a correlation matrixt in order to have an idea of what variables are changing together.
+
+```{r, warning=FALSE}
+
+install.packages('corrplot',repos = "http://cran.us.r-project.org")
+library(corrplot)
+correlations <-cor(mydataset[,c('is_canceled','days_in_waiting_list','required_car_parking_spaces','is_repeated_guest','previous_bookings_not_canceled','booking_changes','previous_cancellations','lead_time','total_of_special_requests','adr','stays_in_week_nights','stays_in_weekend_nights','adults','children','babies')],method = c("pearson"))
+correlations
+corrplot(correlations, method="circle")
+
+
+```
+
+The blue points suggest a positive correlation, while the red ones suggest a negative one. The bigger the point, the stronger the correlation.
+
+```{r, warning=FALSE}
+##correlation matrix as heatmap
+
+col<- colorRampPalette(c("red", "white", "blue"))(20)
+heatmap(correlations, col=col, symm=TRUE)
+
+```
+
+
+We can observe some correlations between variables, both negative and positive, but very weak. 
+
+In order to build the model of logistic regression we will use the glm function.
+The response is represented by is_canceled and the predictors are represented by some independent variables.
+
+We clearly specify that we want a logistic regression by setting the attribute family as "binomial".
+
+
+```{r, warning=FALSE}
+
+logistic_model <- glm(is_canceled ~ lead_time +customer_type + hotel +
+                      deposit_type + adr +total_of_special_requests, data = mydataset , family = "binomial")
+
+summary(logistic_model)
+```
+Summary returns the standard errors, z-score, estimations and p-values for each of the coefficients. According to the results, all coefficients, with one exception, are meaningful.
+
+The next step is to make predictions.
+
+
+```{r, warning=FALSE}
+mydataset$predict<-predict(logistic_model,type="response")
+mydataset$predict[1:6]
+```
+
+We will get an array of probabilities. The first two probabilities are bigger, measuring aproximatively 50% and 88%.
+We will compute the accuracy of the model and try to predict whether the bookings will be canceled or not, based on the variables chosen as predictors.
+In order to do this, we will use the ifelse command and as a threshold we will compute a mean.
+
+Vom obtine un vector de probabilitati. Primele doua probabilitati sunt mai mari, masurand aproximativ 50% si respectiv 88%.
+
+
+```{r}
+p=mean(mydataset$is_canceled)
+p
+
+ mydataset$predictions<-ifelse(mydataset$predict >p,1,0)
+```
+
++ mydataset predictions is an array of true and false values. If mydataset predict is higher than p, mydataset predictions takes value 1, otherwise, takes value 0.
+
+
+![Confusion matrix](https://miro.medium.com/max/712/1*Z54JgbS4DUwWSknhDCvNTQ.png)
+
+TP=true positive
+TN=true negative
+FP=false positive
+FN=false negative 
+
+```{r}
+table(mydataset$predictions,mydataset$is_canceled)
+mean(mydataset$is_canceled == mydataset$predictions)
+```
+The accuracy of the model is almost 75%.
+According to the confusion matrix, the model predicted correctly that 62233 bookings won't be canceled, but classified wrong 17077 bookings.
+By analogy, the model predicted wrong 12933 bookings and classified correctly 27147 bookings as being cancelled.
+
+As a last step, we will analyse two parameters, AUC and ROC, which are used to assess the performance of the classification model.
+AUC= area under curve
+ROC= receiver operating characteristics
+
+AUC can tell us whether the model is able to distinguish between the classes. The higher it is, the better the model will predict if the result will be 1 or 0.
+
+```{r, warning=FALSE}
+
+install.packages("pROC",repos = "http://cran.us.r-project.org")
+library(pROC)
+
+ROC <- roc(mydataset$is_canceled , mydataset$predictions)
+plot(ROC, col = 'blue', main = "ROC curve to hotel booking model")
+```
+
+The area under the ROC curve is AUC and is computed as this: 
+```{r, warning=FALSE}
+auc(ROC)
+```
+AUC has a value close to 1, so we can say that we have a good prediction model.
+
+
+### Conclusions ###
+
++ a model for booking cancellations can help in the identification of the likelihood of a booking being cancelled
++ gives the hotel managers the opportunity to take measures and avoid possible cancellations
++ the most important variables that help in prediction are: lead time, adr, deposit type, arrival day of the month, total number of special requests
++ some possible measures would be:
+- setting non-refundable rates
+- collecting deposits
+- implement more efficient cancellation policies
+- offer special discounts
+- improve customer service by looking athe the number of special requests
+
 
