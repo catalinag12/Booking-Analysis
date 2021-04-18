@@ -4,6 +4,9 @@ author: "Maftei Alexandru, Vasile Catalina"
 output: slidy_presentation
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
 
 ### Introduction
 The dataset contains information on bookings in two types of hotels, both located in Portugal,a resort hotel and a city hotel. Each observation represents a hotel reservation. The data set includes reservations between July 1, 2015 and August 31, 2017, including those canceled. Because it is the actual data of the hotel, all information regarding the identification of the hotel or the client has been deleted. Due to the lack of real business data for scientific and educational purposes, these data sets can play an important role for research and education in revenue management, machine learning or data mining, as well as in other fields.
@@ -97,14 +100,9 @@ data <- data.frame(
 install.packages("ggplot2",repos = "http://cran.us.r-project.org")
 library(ggplot2)
 
-ggplot(data, aes(x="", y=Freq, fill=Var1)) +
-  geom_bar(stat="identity", width=1) +
-  coord_polar("y", start=0)+ 
-  geom_text(aes(y = Freq, label = Var1), color = "white") + 
-  theme(legend.position="none")
 ```
 
-People from almost the entire world choose to spend their holiday in these two hotels. The majority is of course, from Portugal, and also from european countries, such as Great Britain and France.
+
 
 
 
@@ -200,6 +198,166 @@ The online segment has the greatest number of cancellations.
 mydataset %>% group_by(mydataset$reserved_room_type)  %>% summarise(length(is_canceled)) 
 ```
 Room of type A has the greatest number of cancellations.
+
+```{r, include=FALSE}
+install.packages("reticulate",repos = "http://cran.us.r-project.org")   
+library(reticulate)
+py_run_string("import os as os")
+py_run_string("os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = 'C:/Users/catal/anaconda3/envs/r-reticulate/Library/plugins/platforms'")
+py_install("pandas")
+py_install("matplotlib")
+py_install("seaborn")
+```
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+df=r.mydataset
+
+df['country'].value_counts(normalize = True)[:5]
+sns.countplot(x='country', data=df,order=pd.value_counts(df['country']).iloc[:5].index,palette= 'colorblind')
+plt.title('Most Popular Countries of Origin of the Guests', weight='bold')
+plt.xlabel('Country')
+plt.ylabel('Reservation Count')
+```
+
+People from almost the entire world choose to spend their holiday in these two hotels. The majority is of course, from Portugal, and also from european countries, such as Great Britain and France.
+
+```{python}
+df['arrival_date_month'].value_counts(normalize = True)
+ordered_months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+df['arrival_date_month'] = pd.Categorical(df['arrival_date_month'], categories=ordered_months, ordered=True)
+sns.countplot(x='arrival_date_month', data = df,palette= 'Set1')
+plt.title('Most Occupied (Busiest) Month with Bookings', weight='bold')
+plt.xlabel('Month')
+plt.xticks(rotation=45)
+plt.ylabel('Reservation Count')
+```
+
+August is the month with the highest number of bookings, followed by July, while January is the most unoccupied month.
+
+```{python}
+df['is_canceled'].value_counts(normalize = True)
+proportion = df['is_canceled'].value_counts()
+labels = ['Not Cancelled','Cancelled']
+plt.title('Proportion of Cancelled & Not Cancelled Bookings',weight = 'bold')
+plt.pie(proportion,labels=labels,shadow = True, autopct = '%1.1f%%',wedgeprops= {'edgecolor':'black'})
+plt.show()
+```
+
+This piechart shows the proportion of cancelled and not cancelled bookings. 37% of the bookings were cancelled, which is a high percentage and which suggests that some measures should be taken. 
+
+```{python}
+df['market_segment'].value_counts(normalize = True)
+sns.countplot(df['market_segment'], palette='colorblind',order=pd.value_counts(df['market_segment']).index)
+plt.title('Total Number of Bookings by Market Segment', weight='bold')
+plt.xlabel('Market Segment')
+plt.ylabel('Reservation Count')
+```
+
+Most of the bookings are made through online travel agents and less than 20% are made directly by tourists.
+
+
+```{python}
+df['customer_type'].value_counts(normalize = True)
+plt.figure(figsize= (7,4))
+sns.countplot(df['customer_type'],order=pd.value_counts(df['customer_type']).index)
+plt.title('Total Number of Bookings by Customer Type',weight = 'bold')
+plt.xlabel('Market Segment')
+plt.ylabel('Reservation Count')
+```
+
+This plot depicts that 75% of the bookings are transient bookings, 21% are transient-party and almost 3% are contract bookings.
+
+```{python}
+df['total_of_special_requests'].value_counts(normalize = True)
+plt.figure(figsize = (7,4))
+sns.countplot(x='total_of_special_requests', data=df, palette = 'spring_r')
+plt.title('Total Special Request', weight='bold')
+plt.xlabel('Number of Special Request')
+plt.ylabel('Count')
+```
+ 
+ Almost 60% of the bookings come with no special requests.
+
+```{python}
+sns.lineplot(x = "arrival_date_month", y="adr", hue="hotel", data=df, hue_order = ["City Hotel", "Resort Hotel"],palette= 'Set1')
+plt.title("Room price per night and person over the year", weight = 'bold')
+plt.xlabel("Arrival Month")
+plt.xticks(rotation=45)
+plt.ylabel("ADR [EUR]")
+plt.show()
+```
+
+
+The price per night is the most expensive in July, August and September for the resort hotel, while for the city hotel, the highest prices are in March, April and May.
+
+```{python}
+plt.figure(figsize=(7,4))
+sns.countplot(x= 'is_canceled',hue = 'is_repeated_guest',data = df,palette= 'Set2')
+
+```
+
+The guests who choose to book again are more likely to not cancel their bookings.
+
+```{python}
+df['deposit_type'].value_counts(normalize = True)
+proportion = df['deposit_type'].value_counts()
+labels = ['No Deposit','Non Refundable','Refundable']
+plt.title('Proportion of Total Bookings by Deposit Type',weight = 'bold')
+cols = ['red','blue','yellow']
+plt.pie(proportion,labels=labels,shadow = True, autopct = '%1.1f%%',wedgeprops= {'edgecolor':'black'},colors =cols)
+plt.show()
+```
+
+
+The majority of the bookings are made without deposit.
+
+```{python}
+df.groupby('deposit_type')['is_canceled'].value_counts(normalize = True)
+plt.figure(figsize=(7,4))
+sns.countplot(x= 'deposit_type',hue = 'is_canceled',data = df,palette= 'GnBu_d')
+plt.title('Effect of Deposit Type on Cancellations',weight = 'bold')
+plt.xlabel('Depost Type')
+plt.ylabel('Reservation Count')
+```
+
+Around 28% bookings with no deposit and 22% bookings with refund were cancelled.
+Guests who are not obliged to make a deposit are obviously prone to cancel their bookings.
+
+```{python}
+df.groupby('meal')['is_canceled'].value_counts(normalize = True)
+plt.figure(figsize=(7,4))
+sns.countplot(x= 'meal',hue = 'is_canceled',data = df,palette= 'Set1')
+plt.title ('Effect of Meal type on Cancellations',weight = 'bold')
+plt.xlabel("Meal type")
+plt.ylabel('Reservation Count')
+```
+
+The bed&breakfast meal is the most preffered by tourists and obviously, this type has the highest number of cancellations. 
+
+```{python}
+df.groupby('required_car_parking_spaces')['is_canceled'].value_counts(normalize = True)
+plt.figure(figsize=(7,4))
+sns.countplot(x= 'required_car_parking_spaces',hue = 'is_canceled',data = df,palette= 'Set2')
+plt.title ('Effect of Car Parking Space on Cancellations',weight = 'bold')
+plt.xlabel("Number of Car Parking Spaces")
+plt.ylabel('Reservation Count')
+```
+
+Almost 40% of the bookings were cancelled by guests who did not ask for a parking space.
+
+```{python}
+sns.barplot(x='arrival_date_year', y ='lead_time', hue="is_canceled", data=df, palette="Set2")
+plt.title('Arrival Year vs Lead Time By Cancellation Status', weight='bold')
+plt.xlabel(' Arrival Year')
+plt.ylabel('Lead Time')
+plt.legend(loc = "upper right")
+```
+ 
+ Bookings with lead time less than 100 days are less likely to be cancelled.
 
 ### EDA conclusions ###
 
