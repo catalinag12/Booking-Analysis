@@ -97,8 +97,10 @@ data <- data.frame(
   value=countries["Freq"]
 )
 
+remove.packages("ggplot2")
 install.packages("ggplot2",repos = "http://cran.us.r-project.org")
 library(ggplot2)
+
 
 ```
 
@@ -106,8 +108,26 @@ library(ggplot2)
 
 
 
-```{r,warning=FALSE}
-ggplot(data = mydataset,aes(is_canceled))+ geom_histogram(binwidth = 0.5, col='black', fill='blue', alpha = 0.4) + facet_wrap(~hotel)
+
+```{r}
+library(plotly)
+
+countries<-as.data.frame(table(mydataset$country))
+
+data <- data.frame(
+  group=countries["Var1"],
+  value=countries["Freq"]
+)
+
+install.packages("ggplot2",repos = "http://cran.us.r-project.org")
+library(ggplot2)
+
+
+p <- ggplot(data = mydataset,aes(is_canceled))+ geom_histogram(binwidth = 0.5, col='black', fill='blue', alpha = 0.4) + facet_wrap(~hotel)
+fig <- ggplotly(p)
+
+fig
+
 ```
 
 Most of the cancellations are made at city hotels.
@@ -135,21 +155,6 @@ table(mydataset$is_canceled, mydataset$hotel)
 
 
 
-```{r,warning=FALSE}
-mydataset%>%group_by(arrival_date_month)%>%summarise(Count = n())%>%arrange(-Count)%>%ggplot(aes(x = arrival_date_month, y = Count)) +
-  geom_bar(stat = 'identity',fill = "dodgerblue") + coord_flip() + geom_text(aes(x =arrival_date_month, y=0.02, label= Count),
-                                                                             hjust=-1, vjust=0, size=4, 
-                                                                             colour="black", fontface="bold",
-                                                                             angle=360)
-```
-
-The most popular month is august, followed by july, and the least popular for travelling is january.
-
-```{r,warning=FALSE}
-mydataset %>% group_by(mydataset$arrival_date_month)  %>% summarise(length(is_canceled))
-```
-
-July and august are also the months with the greatest number of cancellations.
 
 ```{r,warning=FALSE}
 mydataset %>% group_by(mydataset$adults)  %>% summarise(length(is_canceled))
@@ -157,21 +162,6 @@ mydataset %>% group_by(mydataset$adults)  %>% summarise(length(is_canceled))
 ```
 
 Couples are more likely to cancel their bookings.
-
-
-```{r}
-
-ggplot(mydataset, aes((arrival_date_month), fill = factor(is_canceled))) +
-  geom_bar() + geom_text(stat = "count", aes(label = ..count..), hjust = 1) +
-  coord_flip() + scale_fill_discrete(
-    name = "Status",
-    breaks = c("0", "1"),
-    label = c("Canceled", "Confirmed")
-  ) +
-  labs(title = "Status of the booking depending on month",
-       x = "Month",
-       y = "Number") + theme_bw()
-```
 
  
 
@@ -185,6 +175,7 @@ ggplot(mydataset, aes(customer_type, fill = hotel)) +
         panel.background = element_blank())
 ```
 
+The transient tourists are more likely to cancel their bookings.
 
 
 ```{r,warning=FALSE}
@@ -198,6 +189,33 @@ The online segment has the greatest number of cancellations.
 mydataset %>% group_by(mydataset$reserved_room_type)  %>% summarise(length(is_canceled)) 
 ```
 Room of type A has the greatest number of cancellations.
+
+```{r,warning=FALSE}
+mydataset %>% group_by(mydataset$arrival_date_month)  %>% summarise(length(is_canceled))
+```
+
+July and august are also the months with the greatest number of cancellations.
+
+```{r}
+library(plotly)
+
+
+p <-ggplot(mydataset, aes((arrival_date_month), fill = factor(is_canceled))) +
+  geom_bar() +
+  coord_flip() + scale_fill_discrete(
+    name = "Status",
+    breaks = c("0", "1"),
+    label = c("Canceled", "Confirmed")
+  ) +
+  labs(title = "Status of the booking depending on month",
+       x = "Month",
+       y = "Number") + theme_bw()
+
+fig <-ggplotly(p)
+
+fig
+
+```
 
 ```{r, include=FALSE}
 install.packages("reticulate",repos = "http://cran.us.r-project.org")   
@@ -237,6 +255,10 @@ plt.ylabel('Reservation Count')
 ```
 
 August is the month with the highest number of bookings, followed by July, while January is the most unoccupied month.
+
+
+
+
 
 ```{python}
 df['is_canceled'].value_counts(normalize = True)
@@ -403,8 +425,8 @@ The blue points suggest a positive correlation, while the red ones suggest a neg
 ```{r, warning=FALSE}
 ##correlation matrix as heatmap
 
-col<- colorRampPalette(c("red", "white", "blue"))(20)
-heatmap(correlations, col=col, symm=TRUE)
+##col<- colorRampPalette(c("red", "white", "blue"))(20)
+##heatmap(correlations, col=col, symm=TRUE)
 
 ```
 
@@ -438,7 +460,6 @@ We will get an array of probabilities. The first two probabilities are bigger, m
 We will compute the accuracy of the model and try to predict whether the bookings will be canceled or not, based on the variables chosen as predictors.
 In order to do this, we will use the ifelse command and as a threshold we will compute a mean.
 
-Vom obtine un vector de probabilitati. Primele doua probabilitati sunt mai mari, masurand aproximativ 50% si respectiv 88%.
 
 
 ```{r}
@@ -486,6 +507,230 @@ The area under the ROC curve is AUC and is computed as this:
 auc(ROC)
 ```
 AUC has a value close to 1, so we can say that we have a good prediction model.
+
+
+### Random forest ###
+```{r}
+install.packages("tidyverse",repos = "http://cran.us.r-project.org")
+install.packages("lattice",repos = "http://cran.us.r-project.org")
+install.packages("dplyr",repos = "http://cran.us.r-project.org")
+
+ 
+
+library(tidyverse)
+library(dplyr)
+library(lattice)
+library(caret)
+library(magrittr)
+```
+ We will use PCA algorithm to reduce dimesion of our date
+```{r}
+n_data<- mydataset %>% select_if(is.numeric)
+n_data<- n_data[-1] # Renuntam la variabila de raspuns
+head(n_data)
+pc<- prcomp(n_data, scale. = T, center = T)
+summary(pc)
+```
+
+ 
+
+ PC 1 2 and 3 have the bigest values of Proportion of Variance and the smallest of  Cumulative Proportion
+
+ 
+
+```{r}
+pca <- predict(pc, newdata = n_data)
+pca_data<- as.data.frame(pca)
+head(pca_data)
+```
+
+ 
+
++
+Select only PC 1 2 and 3
+and extract categorical values
+
+ 
+
+```{r}
+pca_data<- pca_data[, 1:3] 
+head(pca_data)
+c_data<- select_if(mydataset,is.factor) 
+head(c_data)
+```
+Since we have imbalanced kind of dataset, Ensemble methods will avoid overfitting problems
+We dont required 'reservation status date, company(94% missing values) & agent ID'
+Randomforest wont work for variable which have more than 52 Levels. since 'country'feature has 178 level, doing 'one hot encoding' for all values will result curse in dimensionality
+
+ 
+
+We add the categorical variables with the created response variables
+```{r}
+response_variable<- mydataset[2] 
+final_data <- cbind(response_variable,c_data,pca_data)
+head(final_data)
+str(final_data)
+final_data<- final_data[ ,-c(11,12,15)]
+head(final_data)
+dmy <- dummyVars(" ~ country", data = final_data)
+dummy_data <- data.frame(predict(dmy, newdata = final_data))
+head(dummy_data)
+
+ 
+
+pc<- prcomp(dummy_data, scale. = T, center = T)
+pca_dummy<- predict(pc, newdata = dummy_data)
+
+ 
+
+```
+
+ 
+
+We will use PCA for fictitious variables because there are too many columns
+```{r}
+
+ 
+
+pca_dummy_data <- as.data.frame(pca_dummy) 
+pca_dummy_final<- pca_dummy_data[1:2]
+head(pca_dummy_final)
+
+ 
+
+new_data<- cbind(final_data, pca_dummy_final)
+new_final <- new_data[-5]
+str(new_final)
+new_final$is_canceled<- as.factor(new_final$is_canceled)  
+
+ 
+
+sind<- sample(2,nrow(new_final),
+              replace = T,
+              prob = c(0.7,0.3))
+
+ 
+
+train_data<- new_final[sind == 1,]
+test_data<- new_final[sind == 2,]
+
+ 
+
+library(randomForest)
+rf_model <- randomForest(is_canceled~.,
+                         data = train_data,
+                         ntree = 500)
+predict_train<- predict(rf_model,train_data)
+confusionMatrix(predict_train, train_data$is_canceled)
+predict_test<- predict(rf_model,test_data)
+confusionMatrix(predict_test, test_data$is_canceled)
+```
+
+ 
+
+We give up the Country variable
+
+ 
+
+```{r}
+df_o_country<- new_final[1:14] 
+sind<- sample(2,nrow(df_o_country),
+              replace = T,
+              prob = c(0.7,0.3))
+
+ 
+
+train_data2<- new_final[sind == 1,]
+test_data2<- new_final[sind == 2,]
+rf_model2 <- randomForest(is_canceled~.,
+                          data = train_data2,
+                          ntree = 500)
+predict_test<- predict(rf_model,test_data)
+confusionMatrix(predict_test, test_data$is_canceled)
+
+ 
+
+```
+
+ 
+
+
+### Time series ###
+
+ 
+
+```{r}
+
+ 
+
+library(lubridate)
+
+ 
+
+#Time series Analysis with Seasonal Component using MLR
+#Filter Bookings which are checkout and group by month
+
+ 
+
+
+hdd =  mydataset %>% 
+  filter(reservation_status=='Check-Out') %>%
+  group_by(reservation_status_date,arrival_date_month )%>%
+  summarise(n=n())
+hdd$reservation_status_date = as.Date(hdd$reservation_status_date)
+
+ 
+
+hd = hdd %>% group_by(Date=floor_date(reservation_status_date, "month")) %>%
+  summarise(NumberOfBookings=sum(n))
+hd = hd[-27,]
+ggplot(hd, aes(Date,NumberOfBookings)) + geom_line()
+
+ 
+
+#Linear Regression Model building for TS forecast
+
+ 
+
+n = length(hd$NumberOfBookings)
+l = 2
+hs = ts(hd$NumberOfBookings, start=c(2015, 7), end=c(2017,8), frequency= 12)
+trainhs = ts(hd$NumberOfBookings[1: (n-l)], start=c(2015, 7) ,frequency= 12)
+tesths  = ts(hd$NumberOfBookings[(n-l+1) : n], end=c(2017,8) ,frequency= 12)
+
+ 
+
+install.packages("tseries",repos = "http://cran.us.r-project.org")
+install.packages("forecast",repos = "http://cran.us.r-project.org")
+library(tseries)
+adf.test(hs) 
+kpss.test(hs)
+components = stl(hs, 'periodic')
+plot(components)
+library("forecast")
+Afit = auto.arima(hs, trace=TRUE)
+
+ 
+
+checkresiduals(Afit)
+Aforecast = forecast(Afit)
+accuracy(Aforecast)
+Aforecast
+plot(forecast(auto.arima(hs)), sub = "Plot pentru forecast")
+
+ 
+
+Hfit = HoltWinters(hs ,beta=TRUE, gamma=TRUE)
+
+ 
+
+Hfit$fitted
+checkresiduals(Hfit)
+Hforecast = forecast(Hfit, h=8)
+accuracy(Hforecast)
+Hforecast
+plot(Hforecast)
+```
 
 
 ### Conclusions and recommendations ###
